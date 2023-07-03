@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Transactional
@@ -51,6 +52,36 @@ class DiaryServiceTest {
 
         //then
         assertEquals(result.get(0).getDate().compareTo(date), 0);
+    }
+
+    @Test
+    void readDiaries() {
+        //given
+        LocalDate startDate = LocalDate.parse("2023-05-20");
+        LocalDate endDate = LocalDate.parse("2023-06-20");
+
+        //when
+        List<Diary> result = diaryRepository.findAllByDateBetween(startDate, endDate);
+
+        //then
+        assertTrue(result.get(0).getDate().isBefore(LocalDate.parse("2023-06-20")));
+        assertTrue(result.get(0).getDate().isAfter(LocalDate.parse("2023-05-20")));
+    }
+
+    @Test
+    void updateDiary() {
+        //given
+        LocalDate date = LocalDate.parse("2023-06-03");
+        String text = "um....";
+
+        //when
+        Diary nowDiary = diaryRepository.getFirstByDate(date);
+        nowDiary.setText(text);
+        diaryRepository.save(nowDiary);
+        Diary result = diaryRepository.getFirstByDate(date);
+
+        //then
+        assertEquals(result.getText(), text);
     }
 
 

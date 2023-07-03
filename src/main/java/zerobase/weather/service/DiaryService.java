@@ -45,7 +45,6 @@ public class DiaryService {
         this.dateWeatherRepository = dateWeatherRepository;
     }
 
-    // 초 분 시 일 월 년 -> 매일 새벽 1시
     @Scheduled(cron = "0 0 1 * * *")
     @Transactional
     public void saveWeatherDate() {
@@ -72,15 +71,13 @@ public class DiaryService {
         dateWeather.setWeather(parsedWeather.get("main").toString());
         dateWeather.setIcon(parsedWeather.get("icon").toString());
         dateWeather.setTemperature((Double)parsedWeather.get("temp"));
+        dateWeatherRepository.save(dateWeather);
         return dateWeather;
     }
 
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void createDiary(LocalDate date, String text) {
-// 매일 새벽 1시에 DB 에 저장되므로 굳이 API 에 접근하지 않아도됨!
-//        String weatherData = getWeatherString();
-//        Map<String, Object> parsedWeather = parseWeather(weatherData);
 
         logger.info("started to create diary");
         DateWeather dateWeather = getDateWeather(date);
@@ -105,19 +102,22 @@ public class DiaryService {
         return diaryRepository.findAllByDateBetween(startDate, endDate);
     }
 
+    @Transactional
     public void updateDiary(LocalDate date, String text) {
         Diary nowDiary = diaryRepository.getFirstByDate(date);
         nowDiary.setText(text);
         diaryRepository.save(nowDiary);
     }
 
+    @Transactional
     public void deleteDiary(LocalDate date) {
         diaryRepository.deleteAllByDate(date);
     }
 
 
     private String getWeatherString() {
-        String apiUrl = "https://api.openweathermap.org/data/2.5/weather?q=seoul&appid="
+        String apiUrl =
+                "https://api.openweathermap.org/data/2.5/weather?q=seoul&appid="
                 + apiKey;
 
         try {
@@ -128,9 +128,11 @@ public class DiaryService {
             BufferedReader br;
 
             if (responseCode == 200) {
-                br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                br = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream()));
             } else {
-                br = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+                br = new BufferedReader(
+                        new InputStreamReader(connection.getErrorStream()));
             }
 
             String inputLine;
